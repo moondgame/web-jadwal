@@ -13,6 +13,10 @@ let state = { jurusan: null, kelas: null };
 
 const boardMain = document.getElementById('boardMain');
 const trailEl = document.getElementById('trail');
+const backBtnSlot = document.getElementById('backBtnSlot');
+
+const ICON_BACK = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>`;
+const ICON_ARROW = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>`;
 
 async function loadData() {
   try {
@@ -34,6 +38,14 @@ async function loadData() {
 function setState(next) {
   state = { ...state, ...next };
   render();
+}
+
+function goBack() {
+  if (state.jurusan === 'TI' && state.kelas) {
+    setState({ kelas: null });
+  } else if (state.jurusan) {
+    setState({ jurusan: null, kelas: null });
+  }
 }
 
 function renderTrail() {
@@ -62,17 +74,31 @@ function renderTrail() {
       if (btn.dataset.action === 'jurusan') setState({ kelas: null });
     });
   });
+
+  // tombol kembali hanya muncul kalau sudah melangkah dari layar awal
+  if (state.jurusan) {
+    backBtnSlot.innerHTML = `<button class="btn-back" id="backBtn">${ICON_BACK} Kembali</button>`;
+    document.getElementById('backBtn').addEventListener('click', goBack);
+  } else {
+    backBtnSlot.innerHTML = '';
+  }
 }
 
 function renderJurusanChoice() {
   boardMain.innerHTML = `
     <div class="choice-grid">
       <button class="choice-card" data-jurusan="TI">
-        <h3>Teknik Informatika</h3>
+        <div class="choice-card__top">
+          <h3>Teknik Informatika</h3>
+          <span class="choice-card__arrow">${ICON_ARROW}</span>
+        </div>
         <p>${JURUSAN_INFO.TI.desk}</p>
       </button>
       <button class="choice-card" data-jurusan="SI">
-        <h3>Sistem Informasi</h3>
+        <div class="choice-card__top">
+          <h3>Sistem Informasi</h3>
+          <span class="choice-card__arrow">${ICON_ARROW}</span>
+        </div>
         <p>${JURUSAN_INFO.SI.desk}</p>
       </button>
     </div>`;
@@ -86,11 +112,17 @@ function renderKelasChoice() {
   boardMain.innerHTML = `
     <div class="choice-grid">
       <button class="choice-card" data-kelas="A">
-        <h3>Kelas TI A</h3>
+        <div class="choice-card__top">
+          <h3>Kelas TI A</h3>
+          <span class="choice-card__arrow">${ICON_ARROW}</span>
+        </div>
         <p>Lihat jadwal kuliah kelas A.</p>
       </button>
       <button class="choice-card" data-kelas="B">
-        <h3>Kelas TI B</h3>
+        <div class="choice-card__top">
+          <h3>Kelas TI B</h3>
+          <span class="choice-card__arrow">${ICON_ARROW}</span>
+        </div>
         <p>Lihat jadwal kuliah kelas B.</p>
       </button>
     </div>`;
@@ -105,6 +137,76 @@ function renderJadwal() {
     if (item.jurusan !== state.jurusan) return false;
     if (state.jurusan === 'TI') return item.kelas === state.kelas;
     return true;
+  });
+
+  if (rows.length === 0) {
+    boardMain.innerHTML = `
+      <div class="empty-state">
+        <p>Belum ada jadwal yang diisi untuk pilihan ini.</p>
+        <p style="font-size:13px;">Admin dapat menambahkannya lewat halaman admin.</p>
+      </div>`;
+    return;
+  }
+
+  const byHari = {};
+  rows.forEach(r => {
+    byHari[r.hari] = byHari[r.hari] || [];
+    byHari[r.hari].push(r);
+  });
+
+  const hariTersedia = Object.keys(byHari).sort(
+    (a, b) => HARI_URUT.indexOf(a) - HARI_URUT.indexOf(b)
+  );
+
+  boardMain.innerHTML = hariTersedia.map(hari => {
+    const items = byHari[hari].sort((a, b) => a.jamMulai.localeCompare(b.jamMulai));
+    const tableRows = items.map(item => `
+      <tr>
+        <td class="time-cell">${item.jamMulai}–${item.jamSelesai}</td>
+        <td class="course-cell">
+          <strong>${escapeHtml(item.mataKuliah)}</strong>
+          <span>${escapeHtml(item.dosen)}</span>
+        </td>
+        <td>${escapeHtml(item.ruangan)}</td>
+      </tr>`).join('');
+
+    return `
+      <div class="schedule-day">
+        <div class="schedule-day__label">${hari}</div>
+        <div class="schedule-card">
+          <table class="schedule-table">
+            <thead>
+              <tr><th style="width:130px;">Waktu</th><th>Mata Kuliah &amp; Dosen</th><th style="width:140px;">Ruangan</th></tr>
+            </thead>
+            <tbody>${tableRows}</tbody>
+          </table>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str ?? '';
+  return div.innerHTML;
+}
+
+function render() {
+  renderTrail();
+  if (!state.jurusan) {
+    renderJurusanChoice();
+  } else if (state.jurusan === 'TI' && !state.kelas) {
+    renderKelasChoice();
+  } else {
+    renderJadwal();
+  }
+  // pemicu ulang animasi masuk setiap kali layar berganti
+  boardMain.classList.remove('screen-in');
+  void boardMain.offsetWidth;
+  boardMain.classList.add('screen-in');
+}
+
+loadData();
   });
 
   if (rows.length === 0) {
