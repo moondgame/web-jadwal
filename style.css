@@ -1,0 +1,419 @@
+/* ===================================================================
+   Papan Jadwal — sistem desain "papan pengumuman jurusan"
+   Warna:  #16213A (ink navy, latar)   #23314F (panel)
+           #E9EEEC (kertas dingin)     #D9A441 (amber, aksi utama)
+           #4F8A82 (teal, penanda kelas)   #C0492F (rust, hapus/peringatan)
+   Font:   "Fraunces" untuk judul & label besar, "Inter" untuk isi/tabel
+   =================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --ink: #16213a;
+  --panel: #1f2c47;
+  --panel-raised: #263455;
+  --paper: #e9eeec;
+  --paper-dim: #c7cfcb;
+  --amber: #d9a441;
+  --amber-deep: #b88430;
+  --teal: #4f8a82;
+  --rust: #c0492f;
+  --line: rgba(233, 238, 236, 0.14);
+  --shadow: 0 18px 40px rgba(6, 10, 20, 0.35);
+  --radius: 4px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  background: var(--ink);
+  background-image:
+    radial-gradient(circle at 12% 8%, rgba(217, 164, 65, 0.07), transparent 40%),
+    radial-gradient(circle at 90% 85%, rgba(79, 138, 130, 0.08), transparent 45%);
+  color: var(--paper);
+  font-family: 'Inter', -apple-system, sans-serif;
+  line-height: 1.5;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+h1, h2, h3 {
+  font-family: 'Fraunces', Georgia, serif;
+  font-weight: 600;
+  margin: 0;
+  color: var(--paper);
+}
+
+.board {
+  flex: 1;
+  width: 100%;
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 48px 24px 80px;
+}
+
+/* --- kop papan --- */
+.board__header {
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 24px;
+  margin-bottom: 36px;
+}
+
+.board__kicker {
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  color: var(--teal);
+  margin: 0 0 6px;
+}
+
+.board__header h1 {
+  font-size: clamp(28px, 4vw, 38px);
+}
+
+.board__header p {
+  color: var(--paper-dim);
+  max-width: 52ch;
+  margin: 10px 0 0;
+}
+
+/* --- jejak langkah (breadcrumb) --- */
+.trail {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 32px;
+  font-size: 14px;
+}
+
+.trail button {
+  background: none;
+  border: none;
+  color: var(--paper-dim);
+  font: inherit;
+  cursor: pointer;
+  padding: 4px 2px;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  transition: text-decoration-color 0.15s ease, color 0.15s ease;
+}
+
+.trail button:hover { color: var(--amber); text-decoration-color: var(--amber); }
+
+.trail .trail__current {
+  color: var(--paper);
+  font-weight: 600;
+}
+
+.trail .sep { color: var(--paper-dim); opacity: 0.5; }
+
+/* --- kartu pilihan (jurusan / kelas) --- */
+.choice-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 18px;
+}
+
+.choice-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 28px 24px;
+  text-align: left;
+  cursor: pointer;
+  color: var(--paper);
+  font: inherit;
+  position: relative;
+  transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.choice-card::before {
+  content: '';
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--amber);
+  opacity: 0.85;
+}
+
+.choice-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--amber-deep);
+  background: var(--panel-raised);
+}
+
+.choice-card h3 {
+  font-size: 20px;
+  margin-bottom: 8px;
+}
+
+.choice-card p {
+  color: var(--paper-dim);
+  font-size: 14px;
+  margin: 0;
+}
+
+/* --- tabel jadwal --- */
+.schedule-day {
+  margin-bottom: 28px;
+}
+
+.schedule-day__label {
+  font-family: 'Fraunces', serif;
+  font-size: 16px;
+  color: var(--amber);
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+}
+
+.schedule-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14.5px;
+}
+
+.schedule-table th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--paper-dim);
+  font-size: 12.5px;
+  padding: 0 12px 8px;
+  border-bottom: 1px solid var(--line);
+}
+
+.schedule-table td {
+  padding: 12px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+
+.schedule-table tr:last-child td { border-bottom: none; }
+
+.schedule-table .time-cell {
+  color: var(--teal);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.schedule-table .course-cell strong {
+  display: block;
+  font-weight: 600;
+}
+
+.schedule-table .course-cell span {
+  color: var(--paper-dim);
+  font-size: 13px;
+}
+
+.empty-state {
+  background: var(--panel);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+  padding: 40px 24px;
+  text-align: center;
+  color: var(--paper-dim);
+}
+
+/* --- tombol umum --- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  border-radius: var(--radius);
+  padding: 11px 20px;
+  font: inherit;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: filter 0.15s ease, transform 0.1s ease;
+}
+
+.btn:active { transform: translateY(1px); }
+
+.btn--primary { background: var(--amber); color: #1a1206; }
+.btn--primary:hover { filter: brightness(1.08); }
+
+.btn--ghost {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--paper);
+}
+.btn--ghost:hover { border-color: var(--paper-dim); }
+
+.btn--danger { background: var(--rust); color: var(--paper); }
+.btn--danger:hover { filter: brightness(1.1); }
+
+.btn--small { padding: 7px 12px; font-size: 13px; }
+
+/* --- footer --- */
+.board__footer {
+  text-align: center;
+  padding: 18px;
+  color: var(--paper-dim);
+  font-size: 12.5px;
+  border-top: 1px solid var(--line);
+}
+
+.board__footer a { color: var(--teal); }
+
+/* ===================== ADMIN ===================== */
+
+.admin-shell { max-width: 980px; }
+
+.login-card {
+  max-width: 380px;
+  margin: 10vh auto 0;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 32px;
+}
+
+.login-card h2 { margin-bottom: 6px; }
+.login-card p { color: var(--paper-dim); font-size: 14px; margin: 0 0 20px; }
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.field label {
+  font-size: 13px;
+  color: var(--paper-dim);
+}
+
+.field input,
+.field select {
+  background: var(--ink);
+  border: 1px solid var(--line);
+  color: var(--paper);
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  font: inherit;
+}
+
+.field input:focus,
+.field select:focus {
+  outline: 2px solid var(--amber-deep);
+  outline-offset: 1px;
+}
+
+.error-msg {
+  color: #e69a86;
+  font-size: 13.5px;
+  margin: -6px 0 14px;
+  min-height: 1em;
+}
+
+.admin-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.panel h2 { font-size: 19px; margin-bottom: 18px; }
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 14px 16px;
+  align-items: end;
+}
+
+.form-grid .field { margin-bottom: 0; }
+
+.form-actions {
+  margin-top: 18px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.data-table-wrap { overflow-x: auto; }
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  min-width: 720px;
+}
+
+.data-table th {
+  text-align: left;
+  font-size: 12px;
+  color: var(--paper-dim);
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.data-table td {
+  padding: 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.tag {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.tag--ti { background: rgba(79, 138, 130, 0.25); color: #8fd0c6; }
+.tag--si { background: rgba(217, 164, 65, 0.22); color: var(--amber); }
+
+.row-actions { display: flex; gap: 8px; }
+
+.io-bar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.status-pill {
+  font-size: 13px;
+  color: var(--teal);
+  min-height: 1.2em;
+}
+
+.hint-box {
+  background: rgba(217, 164, 65, 0.08);
+  border: 1px solid rgba(217, 164, 65, 0.3);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  font-size: 13.5px;
+  color: var(--paper-dim);
+  margin-bottom: 24px;
+}
+
+.hint-box strong { color: var(--amber); }
+
+@media (max-width: 560px) {
+  .admin-toolbar { flex-direction: column; align-items: stretch; }
+  .form-actions .btn { flex: 1; }
+}

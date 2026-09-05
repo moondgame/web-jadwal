@@ -1,0 +1,171 @@
+// app.js — logika halaman tampilan jadwal (index.html)
+// Sumber data: jadwal.json (di-generate/di-export dari admin.html)
+
+const JURUSAN_INFO = {
+  TI: { nama: 'Teknik Informatika', desk: 'Punya dua kelas paralel, pilih kelas untuk melihat jadwalnya.' },
+  SI: { nama: 'Sistem Informasi', desk: 'Hanya memiliki satu kelas, jadwal langsung ditampilkan.' }
+};
+
+const HARI_URUT = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+
+let allData = [];
+let state = { jurusan: null, kelas: null };
+
+const boardMain = document.getElementById('boardMain');
+const trailEl = document.getElementById('trail');
+
+async function loadData() {
+  try {
+    const res = await fetch('jadwal.json', { cache: 'no-store' });
+    if (!res.ok) throw new Error('gagal memuat');
+    allData = await res.json();
+  } catch (err) {
+    allData = [];
+    boardMain.innerHTML = `
+      <div class="empty-state">
+        <p>Data jadwal belum bisa dimuat.</p>
+        <p style="font-size:13px;">Pastikan file <code>jadwal.json</code> berada di folder yang sama, dan halaman ini diakses lewat server (GitHub Pages / live server), bukan dibuka langsung sebagai file.</p>
+      </div>`;
+    return;
+  }
+  render();
+}
+
+function setState(next) {
+  state = { ...state, ...next };
+  render();
+}
+
+function renderTrail() {
+  const parts = [];
+  parts.push(state.jurusan
+    ? `<button data-action="root">Jadwal</button>`
+    : `<span class="trail__current">Jadwal</span>`);
+
+  if (state.jurusan) {
+    const jurusanNama = JURUSAN_INFO[state.jurusan].nama;
+    if (state.jurusan === 'TI' && state.kelas) {
+      parts.push(`<span class="sep">/</span>`);
+      parts.push(`<button data-action="jurusan">${jurusanNama}</button>`);
+      parts.push(`<span class="sep">/</span>`);
+      parts.push(`<span class="trail__current">Kelas ${state.kelas}</span>`);
+    } else {
+      parts.push(`<span class="sep">/</span>`);
+      parts.push(`<span class="trail__current">${jurusanNama}</span>`);
+    }
+  }
+  trailEl.innerHTML = parts.join('');
+
+  trailEl.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.dataset.action === 'root') setState({ jurusan: null, kelas: null });
+      if (btn.dataset.action === 'jurusan') setState({ kelas: null });
+    });
+  });
+}
+
+function renderJurusanChoice() {
+  boardMain.innerHTML = `
+    <div class="choice-grid">
+      <button class="choice-card" data-jurusan="TI">
+        <h3>Teknik Informatika</h3>
+        <p>${JURUSAN_INFO.TI.desk}</p>
+      </button>
+      <button class="choice-card" data-jurusan="SI">
+        <h3>Sistem Informasi</h3>
+        <p>${JURUSAN_INFO.SI.desk}</p>
+      </button>
+    </div>`;
+
+  boardMain.querySelectorAll('[data-jurusan]').forEach(card => {
+    card.addEventListener('click', () => setState({ jurusan: card.dataset.jurusan, kelas: null }));
+  });
+}
+
+function renderKelasChoice() {
+  boardMain.innerHTML = `
+    <div class="choice-grid">
+      <button class="choice-card" data-kelas="A">
+        <h3>Kelas TI A</h3>
+        <p>Lihat jadwal kuliah kelas A.</p>
+      </button>
+      <button class="choice-card" data-kelas="B">
+        <h3>Kelas TI B</h3>
+        <p>Lihat jadwal kuliah kelas B.</p>
+      </button>
+    </div>`;
+
+  boardMain.querySelectorAll('[data-kelas]').forEach(card => {
+    card.addEventListener('click', () => setState({ kelas: card.dataset.kelas }));
+  });
+}
+
+function renderJadwal() {
+  const rows = allData.filter(item => {
+    if (item.jurusan !== state.jurusan) return false;
+    if (state.jurusan === 'TI') return item.kelas === state.kelas;
+    return true;
+  });
+
+  if (rows.length === 0) {
+    boardMain.innerHTML = `
+      <div class="empty-state">
+        <p>Belum ada jadwal yang diisi untuk pilihan ini.</p>
+        <p style="font-size:13px;">Admin dapat menambahkannya lewat halaman admin.</p>
+      </div>`;
+    return;
+  }
+
+  const byHari = {};
+  rows.forEach(r => {
+    byHari[r.hari] = byHari[r.hari] || [];
+    byHari[r.hari].push(r);
+  });
+
+  const hariTersedia = Object.keys(byHari).sort(
+    (a, b) => HARI_URUT.indexOf(a) - HARI_URUT.indexOf(b)
+  );
+
+  boardMain.innerHTML = hariTersedia.map(hari => {
+    const items = byHari[hari].sort((a, b) => a.jamMulai.localeCompare(b.jamMulai));
+    const tableRows = items.map(item => `
+      <tr>
+        <td class="time-cell">${item.jamMulai}–${item.jamSelesai}</td>
+        <td class="course-cell">
+          <strong>${escapeHtml(item.mataKuliah)}</strong>
+          <span>${escapeHtml(item.dosen)}</span>
+        </td>
+        <td>${escapeHtml(item.ruangan)}</td>
+      </tr>`).join('');
+
+    return `
+      <div class="schedule-day">
+        <div class="schedule-day__label">${hari}</div>
+        <table class="schedule-table">
+          <thead>
+            <tr><th style="width:130px;">Waktu</th><th>Mata Kuliah &amp; Dosen</th><th style="width:140px;">Ruangan</th></tr>
+          </thead>
+          <tbody>${tableRows}</tbody>
+        </table>
+      </div>`;
+  }).join('');
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str ?? '';
+  return div.innerHTML;
+}
+
+function render() {
+  renderTrail();
+  if (!state.jurusan) {
+    renderJurusanChoice();
+  } else if (state.jurusan === 'TI' && !state.kelas) {
+    renderKelasChoice();
+  } else {
+    renderJadwal();
+  }
+}
+
+loadData();
