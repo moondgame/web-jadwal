@@ -1,111 +1,35 @@
 /* ===================================================================
-   Papan Jadwal — sistem desain "papan pengumuman jurusan"
-   Warna:  #16213A (ink navy, latar)   #23314F (panel)
-           #E9EEEC (kertas dingin)     #D9A441 (amber, aksi utama)
-           #4F8A82 (teal, penanda kelas)   #C0492F (rust, hapus/peringatan)
-   Font:   "Fraunces" untuk judul & label besar, "Inter" untuk isi/tabel
+   Papan Jadwal — v2, gaya "glass noticeboard"
+   Latar gradasi gelap berlapis + kartu kaca (glassmorphism), dengan
+   aksen amber/teal yang sama seperti versi awal, tapi lebih hidup:
+   blur, glow tipis, dan satu momen animasi saat pindah langkah.
+
+   Warna:  #0F1526 → #1B2140 (gradient latar)   amber #E3AE55 → #C67A2E
+           teal #58A99B     kaca rgba(255,255,255,.05)   rust #D25B41
+   Font:   "Fraunces" untuk judul, "Inter" untuk isi/tabel
    =================================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-  --ink: #16213a;
-  --panel: #1f2c47;
-  --panel-raised: #263455;
-  --paper: #e9eeec;
-  --paper-dim: #c7cfcb;
-  --amber: #d9a441;
-  --amber-deep: #b88430;
-  --teal: #4f8a82;
-  --rust: #c0492f;
-  --line: rgba(233, 238, 236, 0.14);
-  --shadow: 0 18px 40px rgba(6, 10, 20, 0.35);
-  --radius: 4px;
+  --bg-a: #0f1526;
+  --bg-b: #1b2140;
+  --glass: rgba(255, 255, 255, 0.045);
+  --glass-hover: rgba(255, 255, 255, 0.08);
+  --glass-border: rgba(255, 255, 255, 0.10);
+  --paper: #edf0f5;
+  --paper-dim: #9aa4bd;
+  --amber: #e3ae55;
+  --amber-deep: #c67a2e;
+  --teal: #58a99b;
+  --rust: #d25b41;
+  --shadow-lg: 0 24px 60px rgba(4, 6, 16, 0.45);
+  --shadow-sm: 0 8px 20px rgba(4, 6, 16, 0.3);
+  --radius: 16px;
+  --radius-sm: 10px;
 }
 
 * { box-sizing: border-box; }
-
-html, body {
-  margin: 0;
-  min-height: 100%;
-}
-
-body {
-  background: var(--ink);
-  background-image:
-    radial-gradient(circle at 12% 8%, rgba(217, 164, 65, 0.07), transparent 40%),
-    radial-gradient(circle at 90% 85%, rgba(79, 138, 130, 0.08), transparent 45%);
-  color: var(--paper);
-  font-family: 'Inter', -apple-system, sans-serif;
-  line-height: 1.5;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-h1, h2, h3 {
-  font-family: 'Fraunces', Georgia, serif;
-  font-weight: 600;
-  margin: 0;
-  color: var(--paper);
-}
-
-.board {
-  flex: 1;
-  width: 100%;
-  max-width: 880px;
-  margin: 0 auto;
-  padding: 48px 24px 80px;
-}
-
-/* --- kop papan --- */
-.board__header {
-  border-bottom: 1px solid var(--line);
-  padding-bottom: 24px;
-  margin-bottom: 36px;
-}
-
-.board__kicker {
-  font-size: 13px;
-  letter-spacing: 0.02em;
-  color: var(--teal);
-  margin: 0 0 6px;
-}
-
-.board__header h1 {
-  font-size: clamp(28px, 4vw, 38px);
-}
-
-.board__header p {
-  color: var(--paper-dim);
-  max-width: 52ch;
-  margin: 10px 0 0;
-}
-
-/* --- jejak langkah (breadcrumb) --- */
-.trail {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-bottom: 32px;
-  font-size: 14px;
-}
-
-.trail button {
-  background: none;
-  border: none;
-  color: var(--paper-dim);
-  font: inherit;
-  cursor: pointer;
-  padding: 4px 2px;
-  text-decoration: underline;
-  text-decoration-color: transparent;
-  transition: text-decoration-color 0.15s ease, color 0.15s ease;
-}
-
-.trail button:hover { color: var(--amber); text-decoration-color: var(--amber); }
-
 .trail .trail__current {
   color: var(--paper);
   font-weight: 600;
